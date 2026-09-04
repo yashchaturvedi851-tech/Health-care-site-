@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - HealthCare Plus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare Plus</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="patients.html">Patients</a></li>
+                <li><a href="admin.html">Admin Panel</a></li>
+                <li><a href="api-docs.html">API</a></li>
+                <li><a href="login.html">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section style="padding: 60px 0; min-height: 80vh;">
+        <div class="container">
+            <h1 style="color: #0066cc; margin-bottom: 10px;">Admin Panel</h1>
+            <p style="color: #666; margin-bottom: 30px;">Administration Control Panel</p>
+
+            <!-- VULNERABILITY: Missing Function Level Access Control -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">User Management</h2>
+                <div id="usersList"></div>
+            </div>
+
+            <!-- VULNERABILITY: Mass Assignment -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Create New User</h2>
+                <form id="createUserForm" style="display: grid; gap: 15px;">
+                    <input type="text" id="newUsername" placeholder="Username" required style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <input type="password" id="newPassword" placeholder="Password" required style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <input type="email" id="newEmail" placeholder="Email" required style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <select id="newRole" style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                        <option value="patient">Patient</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="nurse">Nurse</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <input type="text" id="newSalary" placeholder="Salary (for staff)" style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <button type="submit" class="btn btn-primary">Create User</button>
+                </form>
+                <div id="createUserResult" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- VULNERABILITY: SSRF (Server-Side Request Forgery) -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Import Data from URL</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="importUrl" placeholder="Enter URL to import data from" style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <button onclick="importFromUrl()" class="btn btn-primary">Import</button>
+                </div>
+                <div id="ssrfResults"></div>
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                    <strong>Test SSRF:</strong> Try URLs like:<br>
+                    <code>http://localhost:3306</code> (Database)<br>
+                    <code>http://169.254.169.254/latest/meta-data/</code> (AWS Metadata)<br>
+                    <code>file:///etc/passwd</code> (Local Files)
+                </div>
+            </div>
+
+            <!-- VULNERABILITY: Sensitive Data Exposure -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">System Configuration</h2>
+                <div style="background: #1a1a1a; color: #0f0; padding: 20px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;" id="systemConfig"></div>
+            </div>
+
+            <!-- VULNERABILITY: Insecure Deserialization -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Import Session Data (Deserialization)</h2>
+                <textarea id="sessionData" placeholder="Paste serialized session data..." style="width: 100%; height: 100px; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-family: monospace;"></textarea>
+                <button onclick="deserializeSession()" class="btn btn-primary" style="margin-top: 10px;">Deserialize & Load</button>
+                <div id="deserializeResults" style="margin-top: 20px;"></div>
+            </div>
+
+            <!-- VULNERABILITY: Unvalidated Redirects -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Quick Links</h2>
+                <div style="display: grid; gap: 10px;">
+                    <a href="#" onclick="redirectTo()" class="btn btn-secondary">External Portal Login</a>
+                    <input type="text" id="redirectUrl" placeholder="Enter redirect URL" style="padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                </div>
+            </div>
+
+            <!-- Database Console -->
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Database Console (Direct SQL Access)</h2>
+                <textarea id="sqlQuery" placeholder="Enter SQL query..." style="width: 100%; height: 100px; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-family: monospace;">SELECT * FROM users WHERE role='admin'</textarea>
+                <button onclick="executeSQL()" class="btn btn-primary" style="margin-top: 10px;">Execute Query</button>
+                <div id="sqlResults" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 HealthCare Plus. All rights reserved.</p>
+                <p class="debug-info">Admin Panel | Direct DB Access Enabled | Logging: Disabled</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Load user list on page load
+        function loadUsers() {
+            const usersList = document.getElementById('usersList');
+            let html = '<table><thead><tr><th>ID</th><th>Username</th><th>Password</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead><tbody>';
+            
+            DATABASE.users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.password}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>
+                            <button onclick="deleteUserAdmin(${user.id})" style="background: #ff6b6b; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Delete</button>
+                            <button onclick="makeAdmin(${user.id})" style="background: #0066cc; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Make Admin</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            usersList.innerHTML = html;
+        }
+        
+        loadUsers();
+        
+        // VULNERABILITY: No authorization check for user deletion
+        function deleteUserAdmin(userId) {
+            const userIndex = DATABASE.users.findIndex(u => u.id === userId);
+            if (userIndex !== -1) {
+                const user = DATABASE.users[userIndex];
+                alert(`User ${user.username} deleted!`);
+                DATABASE.users.splice(userIndex, 1);
+                loadUsers();
+            }
+        }
+        
+        // VULNERABILITY: No authorization check for privilege escalation
+        function makeAdmin(userId) {
+            const user = DATABASE.users.find(u => u.id === userId);
+            if (user) {
+                user.role = 'admin';
+                alert(`${user.username} is now an admin!`);
+                loadUsers();
+            }
+        }
+        
+        // VULNERABILITY: Mass Assignment
+        document.getElementById('createUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newUser = {
+                id: DATABASE.users.length + 1,
+                username: document.getElementById('newUsername').value,
+                password: document.getElementById('newPassword').value,
+                email: document.getElementById('newEmail').value,
+                role: document.getElementById('newRole').value,
+                salary: document.getElementById('newSalary').value || 0,
+                ssn: '000-00-0000' // Auto-generated
+            };
+            
+            DATABASE.users.push(newUser);
+            
+            document.getElementById('createUserResult').innerHTML = `
+                <div class="alert alert-success">
+                    <h3>User Created Successfully!</h3>
+                    <pre>${JSON.stringify(newUser, null, 2)}</pre>
+                </div>
+            `;
+            
+            loadUsers();
+            this.reset();
+        });
+        
+        // VULNERABILITY: SSRF (Server-Side Request Forgery)
+        function importFromUrl() {
+            const url = document.getElementById('importUrl').value;
+            const results = document.getElementById('ssrfResults');
+            
+            results.innerHTML = `<div class="alert alert-warning">
+                <h3>🔓 SSRF Request Initiated</h3>
+                <p><strong>Target URL:</strong> ${url}</p>
+            </div>`;
+            
+            // Simulate SSRF vulnerability
+            if (url.includes('localhost') || url.includes('127.0.0.1')) {
+                results.innerHTML += `<div class="alert alert-error">
+                    <h4>Internal Service Response:</h4>
+                    <pre style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px;">
+=== MySQL Database Service (Port 3306) ===
+Status: Running
+Database: healthcare_plus_db
+Credentials: root:${API_CONFIG.databasePassword}
+Tables: users, patients, doctors, appointments, billing, medical_records
+                    </pre>
+                </div>`;
+            } else if (url.includes('169.254.169.254')) {
+                results.innerHTML += `<div class="alert alert-error">
+                    <h4>AWS Metadata Service:</h4>
+                    <pre style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px;">
+{
+    "Code": "Success",
+    "AccessKeyId": "${API_CONFIG.awsAccessKey}",
+    "SecretAccessKey": "${API_CONFIG.awsSecretKey}",
+    "Token": "AWS_SESSION_TOKEN_EXAMPLE",
+    "Expiration": "2024-12-31T23:59:59Z"
+}
+                    </pre>
+                </div>`;
+            } else if (url.startsWith('file://')) {
+                results.innerHTML += `<div class="alert alert-error">
+                    <h4>Local File Access:</h4>
+                    <pre style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px;">
+root:x:0:0:root:/root:/bin/bash
+admin:x:1000:1000:Admin:/home/admin:/bin/bash
+healthcareplus:x:1001:1001::/var/www/healthcareplus:/bin/false
+                    </pre>
+                </div>`;
+            } else {
+                results.innerHTML += `<div class="alert alert-success">
+                    <p>External URL request sent (SSRF vulnerability allows internal network access)</p>
+                </div>`;
+            }
+        }
+        
+        // VULNERABILITY: Sensitive Data Exposure
+        document.getElementById('systemConfig').textContent = `
+=== SYSTEM CONFIGURATION ===
+Environment: PRODUCTION
+Debug Mode: ENABLED
+
+Database Configuration:
+  Host: db.healthcareplus.internal
+  Port: 3306
+  Username: root
+  Password: ${API_CONFIG.databasePassword}
+  Database: healthcare_plus_db
+
+API Credentials:
+  API Key: ${API_CONFIG.apiKey}
+  Secret Key: ${API_CONFIG.secretKey}
+  Admin Token: ${API_CONFIG.adminToken}
+
+AWS Configuration:
+  Access Key: ${API_CONFIG.awsAccessKey}
+  Secret Key: ${API_CONFIG.awsSecretKey}
+  Region: us-east-1
+  S3 Bucket: healthcareplus-prod-data
+
+Encryption:
+  Algorithm: AES-256-CBC
+  Key: ${API_CONFIG.encryptionKey}
+
+FTP Backup:
+  Host: ${BACKUP_CREDENTIALS.ftpHost}
+  Username: ${BACKUP_CREDENTIALS.ftpUser}
+  Password: ${BACKUP_CREDENTIALS.ftpPassword}
+
+SMTP Configuration:
+  Host: smtp.healthcareplus.com
+  Port: 587
+  Username: noreply@healthcareplus.com
+  Password: SMTP_P@ssw0rd_2024!
+
+Internal Services:
+  - http://internal-api.healthcareplus.local:8080
+  - http://admin-panel.healthcareplus.local:9090
+  - http://database.healthcareplus.local:3306
+        `;
+        
+        // VULNERABILITY: Insecure Deserialization
+        function deserializeSession() {
+            const sessionData = document.getElementById('sessionData').value;
+            const results = document.getElementById('deserializeResults');
+            
+            try {
+                // Dangerous: deserializing without validation
+                const data = JSON.parse(sessionData);
+                
+                results.innerHTML = `<div class="alert alert-success">
+                    <h3>Session Deserialized Successfully</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>`;
+                
+                // Automatically execute if it contains commands
+                if (data.role === 'admin') {
+                    results.innerHTML += '<div class="alert alert-warning">⚠️ Admin privileges granted!</div>';
+                    localStorage.setItem('currentUser', JSON.stringify(data));
+                }
+                
+                if (data.command) {
+                    results.innerHTML += `<div class="alert alert-error">
+                        🔓 Executing command: <code>${data.command}</code>
+                    </div>`;
+                }
+            } catch (e) {
+                results.innerHTML = `<div class="alert alert-error">Invalid format. Try: {"username":"admin","role":"admin","command":"cat /etc/passwd"}</div>`;
+            }
+        }
+        
+        // VULNERABILITY: Unvalidated Redirects
+        function redirectTo() {
+            const url = document.getElementById('redirectUrl').value;
+            if (url) {
+                // No validation - can redirect to any URL including phishing sites
+                window.location.href = url;
+            } else {
+                alert('Enter a URL first (phishing URL possible)');
+            }
+        }
+        
+        // VULNERABILITY: Direct SQL Execution
+        function executeSQL() {
+            const query = document.getElementById('sqlQuery').value.toLowerCase();
+            const results = document.getElementById('sqlResults');
+            
+            results.innerHTML = `<div style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;">
+Executing: ${query}
+
+`;
+            
+            if (query.includes('select') && query.includes('users')) {
+                results.innerHTML += `Query OK, ${DATABASE.users.length} rows returned\n\n`;
+                results.innerHTML += 'ID | Username | Password | Email | Role | SSN\n';
+                results.innerHTML += '---+----------+----------+-------+------+-------------\n';
+                DATABASE.users.forEach(u => {
+                    results.innerHTML += `${u.id} | ${u.username} | ${u.password} | ${u.email} | ${u.role} | ${u.ssn}\n`;
+                });
+            } else if (query.includes('select') && query.includes('patients')) {
+                results.innerHTML += `Query OK, ${DATABASE.patients.length} rows returned\n\n`;
+                DATABASE.patients.forEach(p => {
+                    results.innerHTML += `${p.id} | ${p.name} | ${p.ssn} | ${p.diagnosis}\n`;
+                });
+            } else if (query.includes('drop') || query.includes('delete')) {
+                results.innerHTML += '⚠️ DESTRUCTIVE QUERY EXECUTED\n';
+                results.innerHTML += 'All data deleted successfully!\n';
+            } else if (query.includes('insert') || query.includes('update')) {
+                results.innerHTML += 'Query OK, 1 row affected\n';
+            } else {
+                results.innerHTML += 'Query executed successfully\n';
+            }
+            
+            results.innerHTML += '</div>';
+        }
+        
+        // Expose everything for easy testing
+        console.log('=== ADMIN PANEL DEBUG ===');
+        console.log('Full Database Access:', DATABASE);
+        console.log('All API Keys:', API_CONFIG);
+        console.log('Backup Credentials:', BACKUP_CREDENTIALS);
+    </script>
+</body>
+</html>

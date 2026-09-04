@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HealthCare Plus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare Plus</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="patients.html">Patients</a></li>
+                <li><a href="admin.html">Admin Panel</a></li>
+                <li><a href="api-docs.html">API</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section style="padding: 60px 0; min-height: 80vh;">
+        <div class="container">
+            <h1 style="color: #0066cc; margin-bottom: 30px;">Admin Dashboard</h1>
+            
+            <div id="welcomeMessage" style="padding: 20px; background: #e8f0f5; border-radius: 5px; margin-bottom: 30px;"></div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px;">
+                <div class="service-card">
+                    <i class="fas fa-users" style="color: #0066cc;"></i>
+                    <h3>Total Patients</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">1,245</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-user-md" style="color: #0066cc;"></i>
+                    <h3>Active Doctors</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">45</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-calendar-check" style="color: #0066cc;"></i>
+                    <h3>Appointments Today</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">67</p>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-dollar-sign" style="color: #0066cc;"></i>
+                    <h3>Revenue (Today)</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">$24,500</p>
+                </div>
+            </div>
+
+            <!-- View Patient Record -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">View Patient Record</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="number" id="patientIdInput" placeholder="Enter Patient ID (1001-1005)" style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <button onclick="loadPatientData()" class="btn btn-primary">Load Patient</button>
+                </div>
+                <div id="patientDataDisplay"></div>
+            </div>
+
+            <!-- System Diagnostics -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">System Diagnostics</h2>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="pingHost" placeholder="Enter hostname to ping (e.g., localhost)" style="flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 5px;">
+                    <button onclick="pingServer()" class="btn btn-primary">Ping</button>
+                </div>
+                <div id="pingResults" style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap;"></div>
+            </div>
+
+            <!-- Import XML Data -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Import XML Data</h2>
+                <textarea id="xmlInput" placeholder="Paste XML here..." style="width: 100%; height: 150px; padding: 12px; border: 2px solid #ddd; border-radius: 5px; font-family: monospace;"></textarea>
+                <button onclick="parseXML()" class="btn btn-primary" style="margin-top: 10px;">Parse XML</button>
+                <div id="xmlResults" style="margin-top: 20px;"></div>
+                <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                    <strong>Test XXE:</strong><br>
+                    <code style="font-size: 0.9rem;">
+                        &lt;?xml version="1.0"?&gt;<br>
+                        &lt;!DOCTYPE foo [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;<br>
+                        &lt;data&gt;&amp;xxe;&lt;/data&gt;
+                    </code>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Recent Activity</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>10:24 AM</td>
+                            <td>admin</td>
+                            <td>Viewed patient record #1003</td>
+                            <td>192.168.1.100</td>
+                        </tr>
+                        <tr>
+                            <td>10:15 AM</td>
+                            <td>doctor1</td>
+                            <td>Updated prescription</td>
+                            <td>192.168.1.105</td>
+                        </tr>
+                        <tr>
+                            <td>10:05 AM</td>
+                            <td>nurse1</td>
+                            <td>Scheduled appointment</td>
+                            <td>192.168.1.110</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 HealthCare Plus. All rights reserved.</p>
+                <p class="debug-info">Session ID: sess_abc123xyz | User Agent: <span id="userAgent"></span></p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // VULNERABILITY: Reflected XSS from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('user') || 'Guest';
+        const token = urlParams.get('token') || 'none';
+        
+        // Direct injection without sanitization
+        document.getElementById('welcomeMessage').innerHTML = `
+            <h2>Welcome back, ${username}!</h2>
+            <p>Your session token: <code>${token}</code></p>
+            <p>Access Level: Administrator</p>
+        `;
+        
+        // VULNERABILITY: IDOR - Insecure Direct Object Reference
+        function loadPatientData() {
+            const patientId = document.getElementById('patientIdInput').value;
+            const patient = DATABASE.patients.find(p => p.id == patientId);
+            const display = document.getElementById('patientDataDisplay');
+            
+            if (patient) {
+                display.innerHTML = `
+                    <div class="alert alert-success">
+                        <h3>Patient Information</h3>
+                        <p><strong>Name:</strong> ${patient.name}</p>
+                        <p><strong>Age:</strong> ${patient.age}</p>
+                        <p><strong>SSN:</strong> ${patient.ssn}</p>
+                        <p><strong>Address:</strong> ${patient.address}</p>
+                        <p><strong>Phone:</strong> ${patient.phone}</p>
+                        <p><strong>Diagnosis:</strong> ${patient.diagnosis}</p>
+                        <p><strong>Medications:</strong> ${patient.medications}</p>
+                        <p><strong>Insurance:</strong> ${patient.insurance}</p>
+                        <p><strong>Outstanding Balance:</strong> $${patient.balance}</p>
+                        <p><strong>Assigned Doctor:</strong> ${patient.doctor}</p>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = '<div class="alert alert-error">Patient not found. Try IDs: 1001, 1002, 1003, 1004, 1005</div>';
+            }
+        }
+        
+        // VULNERABILITY: Command Injection Simulation
+        function pingServer() {
+            const host = document.getElementById('pingHost').value;
+            const results = document.getElementById('pingResults');
+            
+            // Simulating command injection vulnerability
+            // In real scenario: exec("ping " + host) without sanitization
+            results.innerHTML = `$ ping ${host}\n\n`;
+            
+            if (host.includes(';') || host.includes('&') || host.includes('|')) {
+                results.innerHTML += `PING ${host.split(/[;&|]/)[0]} (127.0.0.1) 56(84) bytes of data.\n`;
+                results.innerHTML += `64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.042 ms\n\n`;
+                results.innerHTML += `--- Command Injection Detected ---\n`;
+                results.innerHTML += `Executing additional commands...\n\n`;
+                
+                // Simulate command injection results
+                if (host.includes('cat') || host.includes('type')) {
+                    results.innerHTML += `=== /etc/passwd (simulated) ===\n`;
+                    results.innerHTML += `root:x:0:0:root:/root:/bin/bash\n`;
+                    results.innerHTML += `admin:x:1000:1000:Admin User:/home/admin:/bin/bash\n`;
+                    results.innerHTML += `healthcareplus:x:1001:1001::/var/www/healthcareplus:/bin/false\n`;
+                } else if (host.includes('ls') || host.includes('dir')) {
+                    results.innerHTML += `=== Directory Listing ===\n`;
+                    results.innerHTML += `config.php\ndatabase_backup.sql\n.env\napi_keys.txt\npatient_records/\n`;
+                } else if (host.includes('whoami')) {
+                    results.innerHTML += `root\n`;
+                } else {
+                    results.innerHTML += `Additional command executed: ${host.split(/[;&|]/).slice(1).join(' ')}\n`;
+                }
+            } else {
+                results.innerHTML += `PING ${host} (127.0.0.1) 56(84) bytes of data.\n`;
+                results.innerHTML += `64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time=0.042 ms\n`;
+                results.innerHTML += `64 bytes from 127.0.0.1: icmp_seq=2 ttl=64 time=0.038 ms\n`;
+                results.innerHTML += `\n--- ${host} ping statistics ---\n`;
+                results.innerHTML += `2 packets transmitted, 2 received, 0% packet loss\n`;
+            }
+        }
+        
+        // VULNERABILITY: XXE (XML External Entity) Simulation
+        function parseXML() {
+            const xmlInput = document.getElementById('xmlInput').value;
+            const results = document.getElementById('xmlResults');
+            
+            if (xmlInput.includes('ENTITY') && xmlInput.includes('SYSTEM')) {
+                results.innerHTML = `<div class="alert alert-error">
+                    <h3>⚠️ XXE Vulnerability Exploited!</h3>
+                    <p><strong>External Entity Detected</strong></p>
+                    <pre style="background: #1a1a1a; color: #0f0; padding: 15px; border-radius: 5px; margin-top: 10px;">
+=== /etc/passwd (File Contents) ===
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+healthcareplus:x:1001:1001::/var/www/healthcareplus:/bin/bash
+admin:x:1002:1002:Admin User:/home/admin:/bin/bash
+
+=== Database Configuration ===
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=${API_CONFIG.databasePassword}
+DB_NAME=healthcare_plus_db
+
+=== API Keys ===
+API_KEY=${API_CONFIG.apiKey}
+SECRET_KEY=${API_CONFIG.secretKey}
+                    </pre>
+                </div>`;
+            } else if (xmlInput.includes('<?xml')) {
+                results.innerHTML = `<div class="alert alert-success">
+                    <p>XML parsed successfully!</p>
+                    <p>Try using DOCTYPE with ENTITY to exploit XXE vulnerability</p>
+                </div>`;
+            } else {
+                results.innerHTML = `<div class="alert alert-error">Invalid XML format</div>`;
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        
+        // Display user agent
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        
+        // VULNERABILITY: Debug console exposure
+        console.log('=== DASHBOARD DEBUG INFO ===');
+        console.log('Current User:', username);
+        console.log('Auth Token:', token);
+        console.log('Database Access:', DATABASE);
+        console.log('API Configuration:', API_CONFIG);
+    </script>
+</body>
+</html>

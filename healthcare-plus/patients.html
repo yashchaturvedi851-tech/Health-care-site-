@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - HealthCare Plus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare Plus</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="patients.html">Patients</a></li>
+                <li><a href="admin.html">Admin</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section style="padding: 60px 0; min-height: 80vh;">
+        <div class="container">
+            <h1 style="color: #0066cc; margin-bottom: 30px;">Patient Records</h1>
+            
+            <!-- VULNERABILITY: No authentication to view patient list -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">All Patients</h2>
+                <div id="patientsList"></div>
+            </div>
+
+            <!-- Export Data -->
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Export Patient Data</h2>
+                <button onclick="exportJSON()" class="btn btn-primary">Export as JSON</button>
+                <button onclick="exportCSV()" class="btn btn-secondary" style="margin-left: 10px;">Export as CSV</button>
+                <button onclick="exportXML()" class="btn btn-secondary" style="margin-left: 10px;">Export as XML</button>
+                <div id="exportData" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 HealthCare Plus. All rights reserved.</p>
+                <p class="debug-info">Patient Portal | No Authentication Required</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // VULNERABILITY: Display all patient data without authentication
+        function loadPatients() {
+            const list = document.getElementById('patientsList');
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>SSN</th>
+                            <th>Age</th>
+                            <th>Phone</th>
+                            <th>Address</th>
+                            <th>Diagnosis</th>
+                            <th>Medications</th>
+                            <th>Insurance</th>
+                            <th>Balance</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            DATABASE.patients.forEach(patient => {
+                html += `
+                    <tr>
+                        <td>${patient.id}</td>
+                        <td>${patient.name}</td>
+                        <td>${patient.ssn}</td>
+                        <td>${patient.age}</td>
+                        <td>${patient.phone}</td>
+                        <td>${patient.address}</td>
+                        <td>${patient.diagnosis}</td>
+                        <td>${patient.medications}</td>
+                        <td>${patient.insurance}</td>
+                        <td>$${patient.balance.toFixed(2)}</td>
+                        <td>
+                            <button onclick="viewDetails(${patient.id})" style="background: #0066cc; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">View</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            list.innerHTML = html;
+        }
+        
+        loadPatients();
+        
+        function viewDetails(patientId) {
+            const patient = DATABASE.patients.find(p => p.id === patientId);
+            if (patient) {
+                alert(`
+Full Patient Details:
+
+Name: ${patient.name}
+SSN: ${patient.ssn}
+Age: ${patient.age}
+Phone: ${patient.phone}
+Address: ${patient.address}
+Diagnosis: ${patient.diagnosis}
+Medications: ${patient.medications}
+Doctor: ${patient.doctor}
+Insurance: ${patient.insurance}
+Balance: $${patient.balance.toFixed(2)}
+                `);
+            }
+        }
+        
+        // VULNERABILITY: Export sensitive data without authentication
+        function exportJSON() {
+            const exportDiv = document.getElementById('exportData');
+            const data = JSON.stringify(DATABASE.patients, null, 2);
+            
+            exportDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h3>Data Exported (JSON)</h3>
+                    <pre style="max-height: 400px; overflow-y: auto;">${data}</pre>
+                    <button onclick="downloadFile('patients.json', '${btoa(data)}')" class="btn btn-primary" style="margin-top: 10px;">Download File</button>
+                </div>
+            `;
+        }
+        
+        function exportCSV() {
+            const exportDiv = document.getElementById('exportData');
+            let csv = 'ID,Name,SSN,Age,Phone,Address,Diagnosis,Medications,Doctor,Insurance,Balance\n';
+            
+            DATABASE.patients.forEach(p => {
+                csv += `${p.id},"${p.name}",${p.ssn},${p.age},${p.phone},"${p.address}","${p.diagnosis}","${p.medications}","${p.doctor}","${p.insurance}",${p.balance}\n`;
+            });
+            
+            exportDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h3>Data Exported (CSV)</h3>
+                    <pre style="max-height: 400px; overflow-y: auto;">${csv}</pre>
+                    <button onclick="downloadFile('patients.csv', '${btoa(csv)}')" class="btn btn-primary" style="margin-top: 10px;">Download File</button>
+                </div>
+            `;
+        }
+        
+        function exportXML() {
+            const exportDiv = document.getElementById('exportData');
+            let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<patients>\n';
+            
+            DATABASE.patients.forEach(p => {
+                xml += `  <patient>
+    <id>${p.id}</id>
+    <name>${p.name}</name>
+    <ssn>${p.ssn}</ssn>
+    <age>${p.age}</age>
+    <phone>${p.phone}</phone>
+    <address>${p.address}</address>
+    <diagnosis>${p.diagnosis}</diagnosis>
+    <medications>${p.medications}</medications>
+    <doctor>${p.doctor}</doctor>
+    <insurance>${p.insurance}</insurance>
+    <balance>${p.balance}</balance>
+  </patient>\n`;
+            });
+            
+            xml += '</patients>';
+            
+            exportDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h3>Data Exported (XML)</h3>
+                    <pre style="max-height: 400px; overflow-y: auto;">${xml}</pre>
+                    <button onclick="downloadFile('patients.xml', '${btoa(xml)}')" class="btn btn-primary" style="margin-top: 10px;">Download File</button>
+                </div>
+            `;
+        }
+        
+        function downloadFile(filename, base64Data) {
+            const data = atob(base64Data);
+            const blob = new Blob([data], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+    </script>
+</body>
+</html>

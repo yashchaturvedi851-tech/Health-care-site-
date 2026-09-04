@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - HealthCare Plus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare Plus</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li><a href="login.html" class="btn-login">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="login-section" style="padding: 100px 0; min-height: 80vh;">
+        <div class="container">
+            <div class="login-container" style="max-width: 450px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 5px 30px rgba(0,0,0,0.1);">
+                <h2 style="text-align: center; color: #0066cc; margin-bottom: 30px;">Login to Your Account</h2>
+                
+                <!-- VULNERABILITY: Form submits to GET with credentials in URL -->
+                <form id="loginForm" method="GET" action="dashboard.html">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="username" name="username" placeholder="Enter username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" name="password" placeholder="Enter password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Login</button>
+                </form>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="#" onclick="showCredentials()" style="color: #0066cc;">Forgot password?</a>
+                </div>
+                
+                <!-- VULNERABILITY: Credentials exposed in HTML comments -->
+                <!--
+                    Default Credentials for Testing:
+                    Admin: admin / admin123
+                    Doctor: doctor1 / doctor123
+                    Patient: patient1 / patient123
+                    Nurse: nurse1 / nurse123
+                    Test: testuser / test
+                -->
+                
+                <div id="hint" style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-radius: 5px; display: none;">
+                    <h4>Test Credentials:</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><strong>Admin:</strong> admin / admin123</li>
+                        <li><strong>Doctor:</strong> doctor1 / doctor123</li>
+                        <li><strong>Patient:</strong> patient1 / patient123</li>
+                        <li><strong>Nurse:</strong> nurse1 / nurse123</li>
+                    </ul>
+                </div>
+                
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 HealthCare Plus. All rights reserved.</p>
+                <p class="debug-info">Debug: Login Page | Session: None | HTTPS: Disabled</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // VULNERABILITY: Client-side authentication
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // VULNERABILITY: Credentials sent in URL query parameters
+            const loginSuccess = login(username, password);
+            
+            if (loginSuccess) {
+                // VULNERABILITY: Redirect with credentials in URL
+                window.location.href = `dashboard.html?user=${username}&token=${API_CONFIG.adminToken}&role=admin`;
+            } else {
+                alert('Login failed! Try: admin/admin123 or check HTML source for more credentials');
+                // VULNERABILITY: Failed login reveals valid usernames
+                const user = DATABASE.users.find(u => u.username === username);
+                if (user) {
+                    alert(`Username exists! Password incorrect. Hint: password length is ${user.password.length} characters`);
+                }
+            }
+        });
+        
+        function showCredentials() {
+            document.getElementById('hint').style.display = 'block';
+        }
+        
+        // VULNERABILITY: Auto-fill credentials in console
+        console.log('Available test accounts:', DATABASE.users.map(u => ({username: u.username, password: u.password})));
+    </script>
+</body>
+</html>

